@@ -86,3 +86,26 @@ instacart %>%
 ```
 
 The above code chunk shows the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week.
+
+## Problem 2
+
+First,load and clean the dataset
+
+```{r load_two}
+accel_df = read.csv("data/accel_data.csv") %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(
+    cols = activity_1:activity_1440,
+    names_to = "activity_number",
+    values_to = "activity_counts"
+  ) %>% 
+  mutate(day_type = ifelse(day == ("Sunday") | day == ("Saturday"), "weekends", "weekdays")) %>% 
+  select(week, day_id, day, day_type, everything()) 
+```
+
+```{r accel_table}
+accel_df %>% 
+  group_by(day_id, day, day_type) %>% 
+  summarize(daily_counts = sum(activity_counts)) %>% 
+  knitr::kable()
+```
