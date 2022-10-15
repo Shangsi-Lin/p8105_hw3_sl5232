@@ -159,7 +159,7 @@ accel_df %>%
   distinct(day, activity_number, minute_counts) %>%  
   ggplot(aes(x = activity_number, y = minute_counts, color = day)) + 
   geom_point(alpha = 0.1) +
-  geom_smooth(se = TRUE, size = 3) +
+  geom_smooth(se = TRUE, size = 2) +
   labs(
     title = "24-hour Activity Time Courses",
     x = "Minute in Day",
@@ -169,3 +169,35 @@ accel_df %>%
 ```
 
 By reading the graph above and focusing on its trendlines, we observe that activities are relatively low in the beginning of the 300 minutes of the day, possibly due to sleep. Then activity counts rises between 300 minutes to 420 minutes of the day, and stays relatively high and steady from 420 minutes to 1260 minutes of the day. In the end of the day from 1260 minutes to 1440 minutes, the activity counts drop substantially. It is worth to note that Sunday and Friday have special peaks of activity counts at around 660 minutes and 1260 minutes, respectively. Thus we can conclude that activity counts are closely linked to the status of the individual wearing the accelerometer, the activity counts are high when he is awake and low when he goes to bed.
+
+## Problem 3
+
+```{r load_three}
+library(p8105.datasets)
+data("ny_noaa")
+```
+
+There are `r nrow(ny_noaa)` rows and `r ncol(ny_noaa)` columns of data in this dataset. The content of this dataset are statistics from weather stations in New York State. Varaibles in this dataset include the weather station ID, date of the weather data, and other weather statistics including precipitation(prcp), snowfall(snow), snow depth(snwd), tmax and tmin. There are a lot of missing data entires in this dataset, so it would be an issue to try to directly visualize this dataset.
+
+```{r clean_three}
+ny_noaa = ny_noaa %>% 
+  janitor::clean_names() %>% 
+  separate(date, into = c("year", "month", "day"), sep = "-") %>%
+  mutate(
+    year = as.numeric(year),
+    month = as.numeric(month),
+    day = as.numeric(day),
+    tmax = as.numeric(tmax),
+    tmin = as.numeric(tmin),
+  ) 
+```
+
+```{r snow}
+ny_noaa %>% 
+  count(snow) %>%
+  arrange(desc(n))
+```
+
+For snowfall, the most commonly observed value is 0, this is because of the fact that New York State don't have snows all year round, most of the times there are no snow at all in a day so the most commonly observed value for snowfall is 0.
+
+
