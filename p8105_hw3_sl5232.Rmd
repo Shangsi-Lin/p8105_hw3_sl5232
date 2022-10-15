@@ -89,7 +89,7 @@ The above code chunk shows the mean hour of the day at which Pink Lady Apples an
 
 ## Problem 2
 
-First,load and clean the dataset
+First,load and clean the dataset. Used `pivot_longer` function to modify the dataset to present each individual activity count with their corresponding day id, week, and day of the week. A new parameter called "day_type" is also introduced to indicate whether the particular activity happened in a weekday or weekend. 
 
 ```{r load_two}
 accel_df = read.csv("data/accel_data.csv") %>% 
@@ -100,12 +100,72 @@ accel_df = read.csv("data/accel_data.csv") %>%
     values_to = "activity_counts"
   ) %>% 
   mutate(day_type = ifelse(day == ("Sunday") | day == ("Saturday"), "weekends", "weekdays")) %>% 
-  select(week, day_id, day, day_type, everything()) 
+  mutate(activity_number = activity_number %>% str_replace("^[a-z, _]*", "")) %>% 
+  mutate(activity_number = as.numeric(activity_number)) %>% 
+  select(week, day_id, day, day_type, everything())
 ```
+
+In total, there are  `r nrow(accel_df)` observations and `r ncol(accel_df)` variable classes in the resulting dataset.
+
+Next, make a table to show the total daily activities for each day. Arrange them in decreasing order of the daily activity counts that each day have. 
 
 ```{r accel_table}
 accel_df %>% 
   group_by(day_id, day, day_type) %>% 
   summarize(daily_counts = sum(activity_counts)) %>% 
+  arrange(desc(daily_counts)) %>% 
   knitr::kable()
 ```
+
+From the above table we can see that among the top 10 days with the most daily activities, only 2 of them are weekends, which implies that activities are less during weekends. For further investigation, a histogram showing the total daily activity counts for each day of the week across the five week recording period is made.
+
+```{r histo_accel}
+accel_df %>%
+  group_by(day) %>%
+  summarize(daily_counts = sum(activity_counts)) %>% 
+  ggplot(aes(x = day, y = daily_counts, fill = day)) + 
+  geom_histogram(stat = "identity") + 
+  labs(
+    x = "Day of the Week",
+    y = "Total Activity Counts",
+    title = "Total Daily Activity Counts Recorded by Accelerometer"
+  ) 
+```
+
+From the above histogram we can see that Saturday has the least amount of total daily activity while Friday has the most total daily activity. To investigate the trend for each individual day, a scatterplot is made below.
+
+```{r scatter_accel}
+accel_df %>%
+  group_by(day_id) %>%
+  summarize(daily_counts = sum(activity_counts)) %>% 
+  ggplot(aes(x = day_id, y = daily_counts)) + 
+  geom_point(size = 3) +
+  geom_smooth(se = TRUE) +
+  labs(
+    title = "Daily Activity Counts",
+    x = "Day ID",
+    y = "Activity Counts"
+  )
+```
+
+From the scatter plot above, not much useful information can we gain as the trend line moved up and down and eventually up again throughout the recorded period, with relatively large confidence interval. There are very large differences between each individual day so more data is needed for a clear trend.
+
+The code below will generate a 24-hour activity time courses for each day and each color to indicate the day of the week.
+
+```{r plot_minutes}
+accel_df %>%
+  group_by(day, activity_number) %>%
+  mutate(minute_counts = sum(activity_counts)) %>% 
+  distinct(day, activity_number, minute_counts) %>%  
+  ggplot(aes(x = activity_number, y = minute_counts, color = day)) + 
+  geom_point(alpha = 0.1) +
+  geom_smooth(se = TRUE, size = 3) +
+  labs(
+    title = "24-hour Activity Time Courses",
+    x = "Minute in Day",
+    y = "Activity Counts"
+  ) +
+  scale_x_continuous(breaks = seq(0, 1440, by = 60))
+```
+
+By reading the graph above and focusing on its trendlines, we observe that activities are relatively low in the beginning of the 300 minutes of the day, possibly due to sleep. Then activity counts rises between 300 minutes to 420 minutes of the day, and stays relatively high and steady from 420 minutes to 1260 minutes of the day. In the end of the day from 1260 minutes to 1440 minutes, the activity counts drop substantially. It is worth to note that Sunday and Friday have special peaks of activity counts at around 660 minutes and 1260 minutes, respectively. Thus we can conclude that activity counts are closely linked to the status of the individual wearing the accelerometer, the activity counts are high when he is awake and low when he goes to bed.
