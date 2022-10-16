@@ -227,16 +227,15 @@ From the trendlines we observe in the graph, an observable structure we can see 
 
 Make plot for tmax vs tmin for the full dataset and a plot showing the distribution of snowball values greater than 0 and less than 100 separately by year. Then combine them together to form a two-panel plot.
 
-```{r two_panel}
+```{r tmaxmin_plot}
 tmaxmin_plot = ny_noaa %>% 
   ggplot(aes(x = tmax, y = tmin)) +
   geom_hex() +
   labs(
     title = "NYS tmax vs tmin temperatures",
     x = "Maximum Temperature(°C)",
-    y = "Minimum temperature(°C)") 
-tmaxmin_plot
-
+    y = "Minimum temperature(°C)") +
+  scale_fill_continuous(breaks = c(10000, 30000, 50000)) 
 ```
 
 ```{r snow_distri}
@@ -253,3 +252,8 @@ snow_distri = ny_noaa %>%
   theme(axis.text.x = element_text(angle = 45),
         legend.position = "none")
 ```
+
+```{r two_panel}
+tmaxmin_plot / snow_distri
+```
+
