@@ -184,11 +184,12 @@ ny_noaa = ny_noaa %>%
   janitor::clean_names() %>% 
   separate(date, into = c("year", "month", "day"), sep = "-") %>%
   mutate(
+    prcp = prcp / 10,
     year = as.numeric(year),
     month = as.numeric(month),
     day = as.numeric(day),
-    tmax = as.numeric(tmax),
-    tmin = as.numeric(tmin),
+    tmax = as.numeric(tmax) / 10,
+    tmin = as.numeric(tmin) / 10,
   ) 
 ```
 
@@ -202,7 +203,7 @@ For snowfall, the most commonly observed value is 0, this is because of the fact
 
 Make a two-panel plot showing the average max temperature in January and July in each station across years.
 
-```{r}
+```{r average_tmax}
 ny_noaa %>% 
   filter(month ==  c("1","7")) %>% 
   mutate(month = recode(month, "1" = "January", "7" = "July")) %>% 
@@ -222,4 +223,33 @@ ny_noaa %>%
   facet_grid(. ~ month)
 ```
 
-From the trendlines we observe in the graph, an observable structure we can see is that the average maximum temperature of January have relatively large fluctuations across the years while the average maximum temperature of July have relatively small fluctuations. Also we observe cycle-like behaviors in the average maximum temperature from both months across the years. 
+From the trendlines we observe in the graph, an observable structure we can see is that the average maximum temperature of January have relatively large fluctuations across the years while the average maximum temperature of July have relatively small fluctuations. Also we observe cycle-like behaviors in the average maximum temperature from both months across the years. Both months have outliers in terms of average max temperature. For example, a weather station had 14 celcius as its average maximum temperature in January one year while some of the coldest weather stations had about -12 celcius as its average maximum temperature in January.
+
+Make plot for tmax vs tmin for the full dataset and a plot showing the distribution of snowball values greater than 0 and less than 100 separately by year. Then combine them together to form a two-panel plot.
+
+```{r two_panel}
+tmaxmin_plot = ny_noaa %>% 
+  ggplot(aes(x = tmax, y = tmin)) +
+  geom_hex() +
+  labs(
+    title = "NYS tmax vs tmin temperatures",
+    x = "Maximum Temperature(°C)",
+    y = "Minimum temperature(°C)") 
+tmaxmin_plot
+
+```
+
+```{r snow_distri}
+snow_distri = ny_noaa %>% 
+  filter(snow > 0, snow < 100) %>% 
+  ggplot(aes(x = as.factor(year), y = snow, fill = year)) +
+  geom_violin() +
+  labs(
+    title = "Distribution of Snowfall greater than 0 and less than 100",
+    x = "Year",
+    y = "Snowfall(mm)",
+    caption = "Data from snowfall value (0~100 mm)"
+  ) +
+  theme(axis.text.x = element_text(angle = 45),
+        legend.position = "none")
+```
